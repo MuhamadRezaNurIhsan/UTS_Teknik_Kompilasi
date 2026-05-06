@@ -1,0 +1,53 @@
+NAMA    : Muhamad Reza Nur Ihsan
+NIM     : 231011402633
+KELAS   : 06TPLE002 
+
+
+1. Mengapa fungsi power() harus dipanggil di dalam term(), bukan sebaliknya? Jelaskan kaitannya dengan Operator Precedence.
+Jawaban:
+Fungsi power() harus dipanggil di dalam term() karena operator pangkat (^) memiliki tingkat prioritas (precedence) yang lebih tinggi daripada operator perkalian (*) dan pembagian (/).
+
+Dalam gramatikal EBNF, hierarki operator dari tertinggi ke terendah adalah:
+1)Primary (faktor) : literal, variabel, ekspresi dalam kurung
+2)Power (pangkat) : operator ^
+3)Term (perkalian/pembagian) : operator * dan /
+4)Expression (penjumlahan/pengurangan) : operator + dan -
+
+Dengan memanggil power() dari dalam term(), kita memastikan bahwa:
+- Semua operasi pangkat akan diselesaikan terlebih dahulu sebelum operasi perkalian/pembagian
+- AST yang terbentuk memiliki kedalaman yang tepat sesuai precedence
+
+Jika dibalik (memanggil term() dari dalam power()), maka perkalian akan memiliki prioritas lebih tinggi dari pangkat, yang salah secara matematika.
+
+2. Apa yang terjadi pada fase Analisis Semantik jika variabel z digunakan dalam kode sumber tetapi tidak ada di symbol_table?
+Jawaban:
+Pada fase Analisis Semantik, compiler akan melakukan pengecekan keberadaan variabel di symbol_table. Jika variabel z tidak ditemukan, maka:
+1)Compiler akan melempar error (exception) berupa ParserError
+2)Pesan error yang muncul: "Semantic Error: Undefined variable 'z'"
+3)Proses kompilasi akan berhenti (tidak melanjutkan ke pembuatan TAC atau kode output)
+4)Pengguna akan melihat pesan error yang jelas untuk memperbaiki kode sumbernya
+
+3. Jelaskan mengapa dalam TAC, instruksi untuk a ^ 2 harus muncul sebelum instruksi untuk +.
+Jawaban:
+Instruksi a ^ 2 muncul sebelum instruksi + dalam TAC karena urutan evaluasi AST menggunakan traversal post-order (rekursif), di mana node anak dievaluasi terlebih dahulu sebelum node induk.
+1)Struktur AST untuk a ^ 2 + b * c:
+     BinOp(+)
+      /    \
+ BinOp(^)  BinOp(*)
+  /   \     /   \
+ a     2   b     c
+
+2)Proses generate_tac() dengan rekursi:
+-Fungsi generate_tac() dipanggil pada node + (root)
+-Rekursi ke kiri dulu: generate_tac(BinOp(^))
+-Rekursi ke kiri: generate_tac(a) → return "a"
+-Rekursi ke kanan: generate_tac(2) → return "2" = Cetak t1 = a ^ 2, return "t1"
+
+-Rekursi ke kanan: generate_tac(BinOp(*))
+-Cetak t2 = b * c, return "t2"
+-Cetak t3 = t1 + t2
+
+3)Alasan fundamental:
+-Dependency/data flow: Nilai hasil a ^ 2 (disimpan di t1) dibutuhkan sebagai operand untuk operasi +
+-Semantik evaluasi: Kita tidak bisa menjumlahkan sesuatu sebelum nilai dari operasi pangkat diketahui
+-Correctness: Urutan TAC mencerminkan urutan eksekusi yang benar saat runtime
